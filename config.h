@@ -5,7 +5,13 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
+static char *font = "JetBrainsMono:pixelsize=22:antialias=true:autohint=true";
+/* Spare fonts */
+static char *font2[] = {
+ "JetBrainsMono:pixelsize=22:antialias=true:autohint=true",
+/*"JetBrainsMono-Bold:pixelsize=22:antialias=true:autohint=true",
+*/};
+
 static int borderpx = 2;
 
 /*
@@ -93,6 +99,9 @@ char *termname = "st-256color";
  */
 unsigned int tabspaces = 8;
 
+/* bg opacity */
+float alpha = 0.6;
+
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
 	/* 8 normal colors */
@@ -119,7 +128,8 @@ static const char *colorname[] = {
 
 	/* more colors can be added after 255 to use with DefaultXX */
 	"#cccccc",
-	"#555555",
+	"#2e3440",
+	"black",
 };
 
 
@@ -128,18 +138,33 @@ static const char *colorname[] = {
  * foreground, background, cursor, reverse cursor
  */
 unsigned int defaultfg = 7;
-unsigned int defaultbg = 0;
+unsigned int defaultbg = 258;
 static unsigned int defaultcs = 256;
-static unsigned int defaultrcs = 257;
+static unsigned int defaultrcs = 256;
+
+/* Colors used for selection */
+unsigned int selectionbg = 257;
+unsigned int selectionfg = 7;
+/* If 0 use selectionfg as foreground in order to have a uniform foreground-color */
+/* Else if 1 keep original foreground-color of each cell => more colors :) */
+static int ignoreselfg = 1;
 
 /*
- * Default shape of cursor
- * 2: Block ("█")
- * 4: Underline ("_")
- * 6: Bar ("|")
- * 7: Snowman ("☃")
+ * https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h4-Functions-usi    ng-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q.1D81
+ * Default style of cursor
+ * 0: Blinking block
+ * 1: Blinking block (default)
+ * 2: Steady block ("鈻�")
+ * 3: Blinking underline
+ * 4: Steady underline ("_")
+ * 5: Blinking bar
+ * 6: Steady bar ("|")
+ * 7: Blinking st cursor
+ * 8: Steady st cursor
+
  */
-static unsigned int cursorshape = 2;
+static unsigned int cursorstyle = 1;
+static Rune stcursor = 0x2603; /* snowman (U+2603) */
 
 /*
  * Default columns and rows numbers
@@ -172,8 +197,11 @@ static uint forcemousemod = ShiftMask;
  * Internal mouse shortcuts.
  * Beware that overloading Button1 will disable the selection.
  */
+const unsigned int mousescrollincrement = 1;
 static MouseShortcut mshortcuts[] = {
 	/* mask                 button   function        argument       release */
+	{ XK_ANY_MOD,           Button4, kscrollup,      {.i = 1},      0, /* !alt */ -1 },
+	{ XK_ANY_MOD,           Button5, kscrolldown,    {.i = 1},      0, /* !alt */ -1 },
 	{ XK_ANY_MOD,           Button2, selpaste,       {.i = 0},      1 },
 	{ ShiftMask,            Button4, ttysend,        {.s = "\033[5;2~"} },
 	{ XK_ANY_MOD,           Button4, ttysend,        {.s = "\031"} },
@@ -199,6 +227,8 @@ static Shortcut shortcuts[] = {
 	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
 	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
 	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
+	{ ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
+	{ ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
 };
 
 /*
