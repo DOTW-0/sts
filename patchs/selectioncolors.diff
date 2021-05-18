@@ -1,0 +1,47 @@
+diff --git a/config.h b/config.h
+index 0e01717..fbbb2a4 100644
+--- a/config.h
++++ b/config.h
+@@ -108,7 +108,7 @@ static const char *colorname[] = {
+ 
+ 	/* more colors can be added after 255 to use with DefaultXX */
+ 	"#cccccc",
+-	"#555555",
++	"#2e3440",
+ };
+ 
+ 
+@@ -119,7 +119,14 @@ static const char *colorname[] = {
+ unsigned int defaultfg = 7;
+ unsigned int defaultbg = 0;
+ static unsigned int defaultcs = 256;
+-static unsigned int defaultrcs = 257;
++static unsigned int defaultrcs = 256;
++
++/* Colors used for selection */
++unsigned int selectionbg = 257;
++unsigned int selectionfg = 7;
++/* If 0 use selectionfg as foreground in order to have a uniform foreground-color */
++/* Else if 1 keep original foreground-color of each cell => more colors :) */
++static int ignoreselfg = 1;
+ 
+ /*
+  * Default shape of cursor
+diff --git a/x.c b/x.c
+index 0422421..a001f2e 100644
+--- a/x.c
++++ b/x.c
+@@ -1336,9 +1336,9 @@ xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, i
+ 	}
+ 
+ 	if (base.mode & ATTR_REVERSE) {
+-		temp = fg;
+-		fg = bg;
+-		bg = temp;
++		bg = &dc.col[selectionbg];
++		if (!ignoreselfg)
++			fg = &dc.col[selectionfg];
+ 	}
+ 
+ 	if (base.mode & ATTR_BLINK && win.mode & MODE_BLINK)
+
