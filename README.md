@@ -1,2 +1,3 @@
 # st-ssw
-ss
+
+make clean install
